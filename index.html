@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>シンプルアラーム</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .container.alarm-active {
+      background: #ff6b6b;
+      animation: pulse 0.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.02);
+      }
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .display {
+      background: #f5f5f5;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 30px;
+      font-size: 48px;
+      font-weight: bold;
+      color: #333;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 2px;
+    }
+
+    .container.alarm-active .display {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 56px;
+    }
+
+    .alarm-time-display {
+      font-size: 20px;
+      color: #667eea;
+      margin-top: 10px;
+      font-weight: 600;
+    }
+
+    .container.alarm-active .alarm-time-display {
+      color: white;
+    }
+
+    .form-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .input-group label {
+      font-size: 12px;
+      color: #888;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    input[type="number"] {
+      width: 60px;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 24px;
+      text-align: center;
+      font-weight: bold;
+      transition: border-color 0.3s ease;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .separator {
+      font-size: 32px;
+      color: #333;
+      font-weight: bold;
+      display: flex;
+      align-items: flex-end;
+      height: 50px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-set {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-set:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-set:active {
+      transform: translateY(0);
+    }
+
+    .btn-cancel {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-cancel:hover {
+      background: #d0d0d0;
+    }
+
+    .btn-cancel:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .status.idle {
+      background: #f0f0f0;
+      color: #888;
+    }
+
+    .status.set {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status.active {
+      background: #fff3e0;
+      color: #e65100;
+      animation: blink 0.7s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .alarm-message {
+      display: none;
+      font-size: 24px;
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .container.alarm-active .alarm-message {
+      display: block;
+    }
+
+    /* モバイル対応 */
+    @media (max-width: 480px) {
+      .container {
+        padding: 25px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .display {
+        font-size: 40px;
+      }
+
+      .container.alarm-active .display {
+        font-size: 48px;
+      }
+
+      input[type="number"] {
+        width: 50px;
+        font-size: 20px;
+      }
+
+      button {
+        font-size: 14px;
+        padding: 10px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="container">
+    <h1>⏰ シンプルアラーム</h1>
+    <p class="subtitle">目覚まし時刻を設定してください</p>
+
+    <div class="display" id="currentTime">00:00</div>
+    <div class="alarm-time-display" id="alarmDisplay"></div>
+
+    <div class="form-group">
+      <div class="input-group">
+        <label for="hours">時</label>
+        <input
+          type="number"
+          id="hours"
+          min="0"
+          max="23"
+          value="06"
+          placeholder="00"
+        >
+      </div>
+      <div class="separator">:</div>
+      <div class="input-group">
+        <label for="minutes">分</label>
+        <input
+          type="number"
+          id="minutes"
+          min="0"
+          max="59"
+          value="30"
+          placeholder="00"
+        >
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button class="btn-set" id="setBtn">アラーム設定</button>
+      <button class="btn-cancel" id="cancelBtn" disabled>キャンセル</button>
+    </div>
+
+    <div class="status idle" id="status">
+      アラームがセットされていません
+    </div>
+
+    <div class="alarm-message" id="alarmMessage">
+      ⏰ 時間になりました！
+    </div>
+  </div>
+
+  <script>
+    // 状態管理
+    let state = {
+      alarmTime: null,
+      isAlarmActive: false,
+      alarmTriggered: false,
+      currentInterval: null,
+      audioContext: null,
+    };
+
+    const elements = {
+      container: document.getElementById('container'),
+      currentTime: document.getElementById('currentTime'),
+      alarmDisplay: document.getElementById('alarmDisplay'),
+      hoursInput: document.getElementById('hours'),
+      minutesInput: document.getElementById('minutes'),
+      setBtn: document.getElementById('setBtn'),
+      cancelBtn: document.getElementById('cancelBtn'),
+      status: document.getElementById('status'),
+      alarmMessage: document.getElementById('alarmMessage'),
+    };
+
+    // ローカルストレージから復元
+    function loadAlarmState() {
+      const saved = localStorage.getItem('alarmState');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.alarmTime) {
+            state.alarmTime = parsed.alarmTime;
+            state.isAlarmActive = true;
+            elements.hoursInput.value = String(parsed.alarmTime.hours).padStart(2, '0');
+            elements.minutesInput.value = String(parsed.alarmTime.minutes).padStart(2, '0');
+            updateUI();
+          }
+        } catch (e) {
+          console.error('Failed to load alarm state:', e);
+        }
+      }
+    }
+
+    // ローカルストレージに保存
+    function saveAlarmState() {
+      if (state.isAlarmActive && state.alarmTime) {
+        localStorage.setItem('alarmState', JSON.stringify({
+          alarmTime: state.alarmTime,
+        }));
+      } else {
+        localStorage.removeItem('alarmState');
+      }
+    }
+
+    // 現在時刻を更新
+    function updateCurrentTime() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      elements.currentTime.textContent = `${hours}:${minutes}`;
+      return { hours: now.getHours(), minutes: now.getMinutes() };
+    }
+
+    // アラーム時刻を設定
+    function setAlarm() {
+      const hours = parseInt(elements.hoursInput.value) || 0;
+      const minutes = parseInt(elements.minutesInput.value) || 0;
+
+      // バリデーション
+      if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+        alert('有効な時刻を入力してください（時: 0-23, 分: 0-59）');
+        return;
+      }
+
+      state.alarmTime = { hours, minutes };
+      state.isAlarmActive = true;
+      state.alarmTriggered = false;
+      saveAlarmState();
+      updateUI();
+    }
+
+    // アラームをキャンセル
+    function cancelAlarm() {
+      state.alarmTime = null;
+      state.isAlarmActive = false;
+      state.alarmTriggered = false;
+      elements.container.classList.remove('alarm-active');
+      localStorage.removeItem('alarmState');
+      updateUI();
+      stopAlarmSound();
+    }
+
+    // UIを更新
+    function updateUI() {
+      if (state.isAlarmActive && state.alarmTime) {
+        const timeStr = `${String(state.alarmTime.hours).padStart(2, '0')}:${String(state.alarmTime.minutes).padStart(2, '0')}`;
+        elements.alarmDisplay.textContent = `📍 アラーム設定: ${timeStr}`;
+        elements.setBtn.disabled = true;
+        elements.cancelBtn.disabled = false;
+        elements.status.className = 'status set';
+        elements.status.textContent = `✅ アラームがセットされています`;
+      } else {
+        elements.alarmDisplay.textContent = '';
+        elements.setBtn.disabled = false;
+        elements.cancelBtn.disabled = true;
+        elements.status.className = 'status idle';
+        elements.status.textContent = 'アラームがセットされていません';
+      }
+    }
+
+    // アラーム時刻をチェック
+    function checkAlarm() {
+      if (!state.isAlarmActive || !state.alarmTime) return;
+
+      const current = updateCurrentTime();
+
+      if (
+        current.hours === state.alarmTime.hours &&
+        current.minutes === state.alarmTime.minutes &&
+        !state.alarmTriggered
+      ) {
+        triggerAlarm();
+      }
+
+      // アラームが1分以上過ぎたら自動リセット
+      if (state.alarmTriggered) {
+        const timeDiff =
+          (current.hours * 60 + current.minutes) -
+          (state.alarmTime.hours * 60 + state.alarmTime.minutes);
+
+        if (timeDiff > 1 || timeDiff < -1439) {
+          cancelAlarm();
+        }
+      }
+    }
+
+    // アラーム発動
+    function triggerAlarm() {
+      if (state.alarmTriggered) return;
+
+      state.alarmTriggered = true;
+      elements.container.classList.add('alarm-active');
+      elements.status.className = 'status active';
+      elements.status.textContent = '🔔 アラーム発動中...';
+
+      playAlarmSound();
+    }
+
+    // アラーム音を再生
+    function playAlarmSound() {
+      try {
+        // Web Audio APIで音を生成
+        if (!state.audioContext) {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          state.audioContext = audioCtx;
+        }
+
+        const ctx = state.audioContext;
+
+        // 3回の警告音を繰り返す
+        for (let i = 0; i < 3; i++) {
+          const now = ctx.currentTime + i * 0.3;
+
+          // 1000Hzのビープ音
+          const osc1 = ctx.createOscillator();
+          osc1.frequency.value = 1000;
+          osc1.type = 'sine';
+
+          const gain1 = ctx.createGain();
+          gain1.gain.setValueAtTime(0.5, now);
+          gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+
+          osc1.start(now);
+          osc1.stop(now + 0.2);
+
+          // 1500Hzのビープ音
+          const osc2 = ctx.createOscillator();
+          osc2.frequency.value = 1500;
+          osc2.type = 'sine';
+
+          const gain2 = ctx.createGain();
+          gain2.gain.setValueAtTime(0.5, now + 0.25);
+          gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+
+          osc2.start(now + 0.25);
+          osc2.stop(now + 0.45);
+        }
+
+        // 30秒後に自動停止
+        setTimeout(() => {
+          if (state.alarmTriggered) {
+            cancelAlarm();
+          }
+        }, 30000);
+
+      } catch (e) {
+        console.error('Failed to play alarm sound:', e);
+        // フォールバック: alert音
+        for (let i = 0; i < 5; i++) {
+          setTimeout(() => {
+            if (state.alarmTriggered) {
+              // ビジュアル効果を追加
+            }
+          }, i * 300);
+        }
+      }
+    }
+
+    // アラーム音を停止
+    function stopAlarmSound() {
+      if (state.audioContext) {
+        state.audioContext.close();
+        state.audioContext = null;
+      }
+    }
+
+    // イベントリスナーの登録
+    elements.setBtn.addEventListener('click', setAlarm);
+    elements.cancelBtn.addEventListener('click', cancelAlarm);
+
+    // Enterキーでアラーム設定
+    [elements.hoursInput, elements.minutesInput].forEach(input => {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          setAlarm();
+        }
+      });
+    });
+
+    // 初期化
+    function init() {
+      loadAlarmState();
+      updateCurrentTime();
+      updateUI();
+
+      // 毎秒チェック
+      if (state.currentInterval) {
+        clearInterval(state.currentInterval);
+      }
+      state.currentInterval = setInterval(() => {
+        checkAlarm();
+      }, 1000);
+    }
+
+    // 初期化実行
+    init();
+
+    // ページ離脱時のクリーンアップ
+    window.addEventListener('beforeunload', () => {
+      saveAlarmState();
+    });
+  </script>
+</body>
+</html>
